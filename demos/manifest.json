@@ -1,0 +1,148 @@
+{
+ "demos": [
+  {
+   "slug": "optical-flow",
+   "title": "Sparse optical flow & feature trajectories",
+   "summary": "Shi–Tomasi corners sampled inside the motion-saliency mask are followed frame to frame with pyramidal Lucas–Kanade. Arrows show per-frame displacement, coloured by direction; fading lines are each corner's trajectory.",
+   "shows": [
+    "Lucas–Kanade",
+    "Feature trails",
+    "Direction colour wheel"
+   ],
+   "source": "ex-1.mp4",
+   "clip": {
+    "start_s": 0.0,
+    "seconds": 15.0
+   },
+   "orientation": "landscape",
+   "files": {
+    "annotated.mp4": "/demos/optical-flow/annotated.mp4",
+    "original.mp4": "/demos/optical-flow/original.mp4",
+    "poster.jpg": "/demos/optical-flow/poster.jpg",
+    "report.json": "/demos/optical-flow/report.json",
+    "tracks.csv": "/demos/optical-flow/tracks.csv",
+    "heatmap.png": "/demos/optical-flow/heatmap.png",
+    "trajectories.png": "/demos/optical-flow/trajectories.png"
+   },
+   "stats": {
+    "frames": 375,
+    "resolution": "1280×720",
+    "fps": 25.0,
+    "unique_features": 1032,
+    "objects": 13,
+    "mean_flow_px_s": 120.1,
+    "dominant_direction": {
+     "angle_deg": 303.8,
+     "label": "down-right",
+     "arrow": "↘"
+    },
+    "camera_shift_px": 0.211,
+    "speed": {
+     "calibrated": false,
+     "objects_with_estimate": 0,
+     "median_kmh": null,
+     "range_kmh": null
+    },
+    "detector": "yolox"
+   },
+   "calibration_note": null
+  },
+  {
+   "slug": "vehicle-tracking",
+   "title": "Vehicle tracking with calibrated speed estimates",
+   "summary": "Vehicles are detected (YOLOX), kept only if they move, and carried between detections by their median Lucas–Kanade flow. Speeds come from a 4-point ground-plane homography built from lane markings with assumed standard dimensions, so they are estimates.",
+   "shows": [
+    "Persistent IDs",
+    "Trajectories",
+    "km/h estimate (assumed calibration)"
+   ],
+   "source": "ex-2.mp4",
+   "clip": {
+    "start_s": 0.0,
+    "seconds": 15.0
+   },
+   "orientation": "landscape",
+   "files": {
+    "annotated.mp4": "/demos/vehicle-tracking/annotated.mp4",
+    "original.mp4": "/demos/vehicle-tracking/original.mp4",
+    "poster.jpg": "/demos/vehicle-tracking/poster.jpg",
+    "report.json": "/demos/vehicle-tracking/report.json",
+    "tracks.csv": "/demos/vehicle-tracking/tracks.csv",
+    "heatmap.png": "/demos/vehicle-tracking/heatmap.png",
+    "trajectories.png": "/demos/vehicle-tracking/trajectories.png"
+   },
+   "stats": {
+    "frames": 375,
+    "resolution": "1920×1080",
+    "fps": 25.0,
+    "unique_features": 808,
+    "objects": 35,
+    "mean_flow_px_s": 119.4,
+    "dominant_direction": {
+     "angle_deg": 213.7,
+     "label": "down-left",
+     "arrow": "↙"
+    },
+    "camera_shift_px": 0.112,
+    "speed": {
+     "calibrated": true,
+     "objects_with_estimate": 31,
+     "median_kmh": 124.9,
+     "range_kmh": [
+      77.0,
+      171.9
+     ]
+    },
+    "detector": "yolox"
+   },
+   "calibration_note": "ASSUMED, not surveyed: middle-lane width 3.5 m between the two dashed lines (German RQ 36 cross-section) x 2 lane-dash cycles of 18 m (6 m dash + 12 m gap, German motorway lane line). Dash centroids located automatically on a median background."
+  },
+  {
+   "slug": "motion-saliency",
+   "title": "Motion saliency on a hand-held night shot",
+   "summary": "Accumulated motion saliency (S = 0.9·S + 0.1·B) rendered as a heat overlay. The phone camera is hand-held, so global motion is estimated with RANSAC and removed before frame differencing; remaining heat belongs to moving traffic.",
+   "shows": [
+    "Saliency heat map",
+    "Camera-shake compensation",
+    "Wet-road reflections"
+   ],
+   "source": "ex-3.mp4",
+   "clip": {
+    "start_s": 0.0,
+    "seconds": 12.01
+   },
+   "orientation": "portrait",
+   "files": {
+    "annotated.mp4": "/demos/motion-saliency/annotated.mp4",
+    "original.mp4": "/demos/motion-saliency/original.mp4",
+    "poster.jpg": "/demos/motion-saliency/poster.jpg",
+    "report.json": "/demos/motion-saliency/report.json",
+    "tracks.csv": "/demos/motion-saliency/tracks.csv",
+    "heatmap.png": "/demos/motion-saliency/heatmap.png",
+    "trajectories.png": "/demos/motion-saliency/trajectories.png"
+   },
+   "stats": {
+    "frames": 360,
+    "resolution": "2160×3840",
+    "fps": 29.97,
+    "unique_features": 900,
+    "objects": 23,
+    "mean_flow_px_s": 336.2,
+    "dominant_direction": {
+     "angle_deg": 258.8,
+     "label": "down",
+     "arrow": "↓"
+    },
+    "camera_shift_px": 0.801,
+    "speed": {
+     "calibrated": false,
+     "objects_with_estimate": 0,
+     "median_kmh": null,
+     "range_kmh": null
+    },
+    "detector": "yolox"
+   },
+   "calibration_note": null
+  }
+ ]
+}

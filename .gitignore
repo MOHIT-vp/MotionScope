@@ -1,0 +1,27 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Runtime data (uploads, job outputs)
+data/
+
+# Downloaded model weights (scripts/fetch_model.py)
+models/*.onnx
+models/*.part
+
+# Raw sample footage (third-party clips; not distributed)
+/*.mp4
+/*.mov
+
+# Local-only originals
+main.pdf
+
+# Demo-video production project (the rendered video lives in docs/media/)
+videos/
+
+# Editor / OS / local tool settings
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotionScope · Lucas–Kanade motion and vehicle tracking</title>
+<meta name="description" content="Upload a traffic video and analyse it with Lucas–Kanade optical flow, motion saliency and persistent vehicle tracking, with calibrated speed estimates.">
+<meta name="theme-color" content="#0c0d0f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314161a'/%3E%3Cpath d='M8 12V8h4M24 12V8h-4M8 20v4h4M24 20v4h-4' stroke='%23ffb228' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M16 12.5v7M12.5 16h7' stroke='%23ece8e1' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#/" aria-label="MotionScope home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 12V7h5M25 12V7h-5M7 20v5h5M25 20v5h-5"/><path class="cross" d="M16 12.5v7M12.5 16h7"/></svg>
+      <span>MotionScope</span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a href="#method">How it works</a>
+      <a href="#speed">Calibration</a>
+      <a href="#demos">Demos</a>
+    </nav>
+    <button class="btn btn-primary btn-sm nav-cta" data-action="nav-cta">
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 11V3m0 0L4.5 6.5M8 3l3.5 3.5M3 13h10"/></svg>
+      <span class="nav-cta-label">Analyse video</span>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+<!-- ================================================================ LANDING -->
+<section id="view-landing" class="view">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="eyebrow">Optical flow, motion saliency and vehicle tracking</p>
+      <h1 id="hero-title">Every moving pixel, measured.</h1>
+      <p class="lede">Lucas–Kanade optical flow, motion saliency and persistent vehicle tracking for traffic video. Speed appears only once you calibrate the road.</p>
+
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload a video to analyse" aria-describedby="drop-hint">
+        <input id="file-input" type="file" accept="video/*,.mp4,.mov,.m4v,.avi,.mkv,.webm,.mpg,.mpeg,.wmv" hidden>
+        <div class="dz-body">
+          <svg class="dz-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 16V8h8M40 16V8h-8M8 32v8h8M40 32v8h-8"/><path d="M24 31V17m0 0-6 6m6-6 6 6"/></svg>
+          <div class="dz-text">
+            <strong class="dz-title">Drop a video to analyse</strong>
+            <span id="drop-hint" class="dz-hint">MP4, MOV, AVI, MKV or WebM · up to <span data-bind="max-mb">1024</span> MB · <span data-bind="max-min">15</span> min</span>
+          </div>
+          <span class="btn btn-primary dz-btn" aria-hidden="true">Choose video</span>
+        </div>
+        <div class="dz-progress" hidden>
+          <div class="bar"><span></span></div>
+          <span class="dz-progress-label mono">Uploading…</span>
+        </div>
+      </div>
+      <p id="upload-error" class="form-error" role="alert" hidden></p>
+    </div>
+
+    <figure class="hero-media">
+      <div id="hero-wipe" class="wipe" style="--wipe: 38%">
+        <video id="hero-original" muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1"></video>
+        <div class="wipe-top"><video id="hero-video" muted loop playsinline preload="metadata" aria-label="Processed demonstration video"></video></div>
+        <div class="wipe-line" aria-hidden="true"><span class="wipe-grip"></span></div>
+        <span class="wipe-tag l mono" aria-hidden="true">Original</span>
+        <span class="wipe-tag r mono" aria-hidden="true">Processed</span>
+        <input id="hero-wipe-range" class="wipe-range" type="range" min="0" max="100" value="38" aria-label="Divider between original and processed video">
+        <span class="vf-corner tl" aria-hidden="true"></span><span class="vf-corner tr" aria-hidden="true"></span>
+        <span class="vf-corner bl" aria-hidden="true"></span><span class="vf-corner br" aria-hidden="true"></span>
+      </div>
+      <figcaption class="hero-caption">
+        <span id="hero-caption">Loading demonstration…</span>
+        <span class="hero-hint mono">Drag the divider to compare</span>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section id="method" class="method" aria-labelledby="method-title">
+    <div class="method-intro">
+      <h2 id="method-title">From raw frames to measured tracks.</h2>
+      <p>Seven stages run on every frame. Saliency and Lucas–Kanade tracking are the project's original method, kept with its original parameters; the rest makes the measurements trustworthy.</p>
+      <p class="legend-line mono"><span class="legend-item"><span class="tag tag-orig">Original</span> project method</span><span class="legend-item"><span class="tag tag-new">Added</span> in reconstruction</span></p>
+    </div>
+    <ol class="stages">
+      <li>
+        <span class="stage-n mono">01</span>
+        <div><h3>Resize and grayscale</h3><p>Long side scaled to 640–1280 px. Pixel results are reported back in source-video pixels.</p></div>
+        <span class="tag tag-orig">Original</span>
+      </li>
+      <li>
+        <span class="stage-n mono">02</span>
+        <div><h3>Camera-motion estimate</h3><p>Background corners tracked between frames; a RANSAC similarity transform removes hand-held shake before anything is measured.</p></div>
+        <span class="tag tag-new">Added</span>
+      </li>
+      <li>
+        <span class="stage-n mono">03</span>
+        <div>
+          <h3>Motion saliency</h3>
+          <p>Pixels that changed by more than τ = 30 are flagged; an exponential average keeps a short memory of where motion happens.</p>
+          <pre class="eq" aria-label="Saliency accumulation: B t equals absolute difference greater than tau; S t equals 0.9 S t minus 1 plus 0.1 B t">B<sub>t</sub> = 1[ |I<sub>t</sub> − I<sub>t−1</sub>| &gt; τ ]
+S<sub>t</sub> = 0.9 · S<sub>t−1</sub> + 0.1 · B<sub>t</sub></pre>
+        </div>
+        <span class="tag tag-orig">Original</span>
+      </li>
+      <li>
+        <span class="stage-n mono">04</span>
+        <div>
+          <h3>Lucas–Kanade feature tracking</h3>
+          <p>Shi–Tomasi corners inside the saliency mask, followed with a 3-level pyramid and a 15 × 15 window. A forward–backward check discards unreliable points.</p>
+          <pre class="eq" aria-label="Lucas-Kanade least-squares normal equations">[ ΣIₓ²    ΣIₓI_y ] [u]     [ ΣIₓI_t ]
+[ ΣIₓI_y  ΣI_y²  ] [v] = − [ ΣI_yI_t ]</pre>
+        </div>
+        <span class="tag tag-orig">Original</span>
+      </li>
+      <li>
+        <span class="stage-n mono">05</span>
+        <div><h3>Moving-vehicle detection</h3><p>YOLOX boxes every second frame, kept only if the box actually moves. Motion blobs are the fallback when the model is not installed.</p></div>
+        <span class="tag tag-new">Added</span>
+      </li>
+      <li>
+        <span class="stage-n mono">06</span>
+        <div><h3>Tracking and measurement</h3><p>A SORT-style tracker whose prediction is the median LK flow inside each box, giving persistent IDs, displacement, direction and px/s.</p></div>
+        <span class="tag tag-new">Added</span>
+      </li>
+      <li>
+        <span class="stage-n mono">07</span>
+        <div><h3>Render and report</h3><p>H.264 video with the overlays you choose, plus JSON, CSV, a motion heat map and a trajectory map.</p></div>
+        <span class="tag tag-new">Added</span>
+      </li>
+    </ol>
+  </section>
+
+  <section id="speed" class="speed" aria-labelledby="speed-title">
+    <div class="speed-figure">
+      <svg viewBox="0 0 360 260" role="img" aria-labelledby="speed-fig-title">
+        <title id="speed-fig-title">Schematic, not to scale: the same 10 metres covers few pixels far away and many pixels near the camera. A calibration rectangle A, B, C, D sits on the road.</title>
+        <defs><linearGradient id="road" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17191d"/><stop offset="1" stop-color="#262a31"/></linearGradient></defs>
+        <path d="M150 20 L210 20 L340 250 L20 250 Z" fill="url(#road)"/>
+        <g stroke="#e9e4da" stroke-width="2" opacity=".5"><path d="M180 30v14M180 62v20M180 104v28M180 160v38M180 222v28"/></g>
+        <path class="quad" d="M120 150 L180 150 L180 222 L95 222 Z"/>
+        <g class="quad-pts"><circle cx="120" cy="150" r="4"/><circle cx="180" cy="150" r="4"/><circle cx="180" cy="222" r="4"/><circle cx="95" cy="222" r="4"/></g>
+        <g font-family="JetBrains Mono, monospace" font-size="10" fill="#40d6e6"><text x="108" y="145">A</text><text x="185" y="145">B</text><text x="185" y="236">C</text><text x="82" y="236">D</text></g>
+        <g font-family="JetBrains Mono, monospace" font-size="10" fill="#8d887f"><text x="124" y="142">width</text><text x="190" y="190">length</text></g>
+        <path d="M205 120 l-10 0 M205 60 l-4 0" stroke="#ffb228" stroke-width="2"/>
+        <text x="212" y="64" font-family="JetBrains Mono, monospace" font-size="10" fill="#ffb228">far: 10 m, few px</text>
+        <text x="212" y="124" font-family="JetBrains Mono, monospace" font-size="10" fill="#ffb228">near: 10 m, many px</text>
+      </svg>
+      <p class="fig-note mono">Schematic, not to scale</p>
+    </div>
+    <div class="speed-copy">
+      <h2 id="speed-title">Pixels per second is not kilometres per hour.</h2>
+      <p>The camera sees a projection. A car covering 10 m moves hundreds of pixels near the lens and a handful near the horizon, so no single metres-per-pixel factor is correct. MotionScope keeps two kinds of numbers apart.</p>
+      <dl class="kinds">
+        <div><dt><span class="tag tag-measured">Measured</span></dt><dd>Displacement, flow in px/s, direction, durations and counts, read straight from the pixels.</dd></div>
+        <div><dt><span class="tag tag-estimate">Estimate</span></dt><dd>Speed in km/h. Mark four road points forming a rectangle of known size; a homography maps each vehicle's ground point to metres, and every speed carries its interquartile range.</dd></div>
+      </dl>
+      <p class="fine">Accuracy depends on the reference distances, a correct frame rate, a flat road, and the bottom of each box touching the road.</p>
+    </div>
+  </section>
+
+  <section id="demos" class="demos" aria-labelledby="demos-title">
+    <div class="section-head">
+      <p class="eyebrow">See it in action</p>
+      <h2 id="demos-title">Motion tracking demonstrations</h2>
+      <p class="section-sub">Three runs of this pipeline on the project's sample footage. Statistics are read from each run's report. Switch any clip to its original to compare.</p>
+    </div>
+    <div id="demo-grid" class="demo-grid" aria-live="polite"></div>
+  </section>
+</section>
+
+<!-- ============================================================== WORKSPACE -->
+<section id="view-workspace" class="view" hidden>
+  <header class="ws-head">
+    <div class="ws-title-wrap">
+      <p class="eyebrow">Analysis workspace</p>
+      <h1 id="ws-title" class="ws-title">–</h1>
+    </div>
+  </header>
+
+  <div class="ws-grid">
+    <div class="stage-col">
+      <div class="stage-bar">
+        <div class="seg" role="tablist" aria-label="Video view">
+          <span class="seg-indicator" aria-hidden="true"></span>
+          <button role="tab" id="tab-original" aria-selected="true" data-view="original">Original</button>
+          <button role="tab" id="tab-processed" aria-selected="false" data-view="processed" disabled>Processed</button>
+          <button role="tab" id="tab-compare" aria-selected="false" data-view="compare" disabled>Compare</button>
+        </div>
+        <a class="stage-jump mono" href="#results" id="jump-results" hidden>Results ↓</a>
+      </div>
+      <div id="stage" class="stage" data-mode="original">
+        <video id="v-original" controls playsinline preload="metadata"></video>
+        <div class="stage-processed">
+          <video id="v-processed" controls playsinline preload="metadata"></video>
+        </div>
+        <div class="compare" hidden>
+          <div class="compare-inner">
+            <video id="c-original" muted playsinline preload="auto"></video>
+            <div class="compare-top"><video id="c-processed" muted playsinline preload="auto"></video></div>
+            <div class="compare-handle" aria-hidden="true"><span></span></div>
+            <span class="compare-label l mono">Original</span><span class="compare-label r mono">Processed</span>
+          </div>
+          <div class="compare-controls">
+            <button class="btn btn-ghost btn-sm" id="compare-play">Play</button>
+            <input id="compare-seek" type="range" min="0" max="1000" value="0" aria-label="Seek comparison">
+            <label class="compare-wipe mono">Wipe <input id="compare-wipe" type="range" min="0" max="100" value="50" aria-label="Comparison divider position"></label>
+          </div>
+        </div>
+        <div id="preview-pending" class="stage-note mono" hidden>Preparing a browser-playable preview of this format…</div>
+      </div>
+      <dl id="ws-meta" class="stage-meta" aria-label="Video properties"></dl>
+    </div>
+
+    <aside class="panel" aria-label="Analysis settings">
+      <form id="settings" class="settings">
+        <div class="panel-head">
+          <h2>Analysis settings</h2>
+          <p>Overlays are rendered into the output video.</p>
+        </div>
+
+        <details class="group" open>
+          <summary><span>Processing</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg></summary>
+          <div class="group-body">
+            <fieldset class="seg-field">
+              <legend>Resolution (long side)</legend>
+              <div class="seg seg-sm">
+                <label><input type="radio" name="process_size" value="640"><span>640 px</span></label>
+                <label><input type="radio" name="process_size" value="960" checked><span>960 px</span></label>
+                <label><input type="radio" name="process_size" value="1280"><span>1280 px</span></label>
+              </div>
+              <p class="field-hint">Faster · balanced · detailed</p>
+            </fieldset>
+            <label class="field">Object detector
+              <select name="detector">
+                <option value="auto" selected>Auto (YOLOX if installed)</option>
+                <option value="motion">Motion blobs only</option>
+              </select>
+            </label>
+          </div>
+        </details>
+
+        <details class="group" open>
+          <summary><span>Overlays</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg></summary>
+          <div class="group-body">
+            <div class="toggles">
+              <label class="switch"><input type="checkbox" name="layer_flow_vectors" checked><span class="sw" aria-hidden="true"></span>Flow vectors</label>
+              <label class="switch"><input type="checkbox" name="layer_feature_trails" checked><span class="sw" aria-hidden="true"></span>Feature trails</label>
+              <label class="switch"><input type="checkbox" name="layer_objects" checked><span class="sw" aria-hidden="true"></span>Vehicle IDs</label>
+              <label class="switch"><input type="checkbox" name="layer_saliency"><span class="sw" aria-hidden="true"></span>Saliency heat</label>
+              <label class="switch"><input type="checkbox" name="layer_hud" checked><span class="sw" aria-hidden="true"></span>Info panel</label>
+            </div>
+          </div>
+        </details>
+
+        <details class="group" id="cal-group">
+          <summary><span>Speed calibration</span><span id="cal-summary" class="summary-note mono">Off</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg></summary>
+          <div class="group-body">
+            <p id="cal-status" class="cal-status">Not calibrated. Results stay in pixels; no km/h is reported.</p>
+            <div class="cal-actions">
+              <button type="button" class="btn btn-ghost btn-sm" data-action="open-calibration">Calibrate ground plane</button>
+              <button type="button" class="btn btn-link btn-sm" data-action="clear-calibration" hidden>Remove</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="group">
+          <summary><span>Advanced</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg></summary>
+          <div class="group-body">
+            <div class="field-row">
+              <label class="field">Frame rate override
+                <input name="fps_override" type="number" min="1" max="240" step="0.001" placeholder="From file" inputmode="decimal">
+              </label>
+              <label class="field">Max frames
+                <input name="max_frames" type="number" min="2" step="1" placeholder="All" inputmode="numeric">
+              </label>
+            </div>
+            <label class="switch"><input type="checkbox" name="compensate_camera" checked><span class="sw" aria-hidden="true"></span>Compensate camera shake</label>
+          </div>
+        </details>
+
+        <div class="panel-foot">
+          <p id="job-error" class="form-error" role="alert" hidden></p>
+          <button id="start-btn" class="btn btn-primary btn-block" type="submit">Start analysis</button>
+        </div>
+      </form>
+
+      <div id="job" class="job" hidden aria-live="polite">
+        <div class="job-row"><h2 id="job-state" class="job-state">Queued</h2><span id="job-pct" class="mono">0%</span></div>
+        <div class="bar big"><span id="job-bar"></span></div>
+        <dl class="job-stats">
+          <div><dt>Frames</dt><dd id="job-frames" class="mono">0 / 0</dd></div>
+          <div><dt>Throughput</dt><dd id="job-fps" class="mono">–</dd></div>
+          <div><dt>Remaining</dt><dd id="job-eta" class="mono">–</dd></div>
+        </dl>
+        <div class="job-actions">
+          <button class="btn btn-ghost btn-sm" data-action="pause">Pause</button>
+          <button class="btn btn-ghost btn-sm" data-action="resume" hidden>Resume</button>
+          <button class="btn btn-danger btn-sm" data-action="cancel">Cancel</button>
+          <a class="btn btn-primary btn-sm" href="#results" data-action="view-results" hidden>View results</a>
+          <button class="btn btn-ghost btn-sm" data-action="rerun" hidden>Adjust and re-run</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section id="results" class="results" hidden aria-labelledby="results-title">
+    <div class="results-head">
+      <h2 id="results-title">Motion report</h2>
+      <div id="downloads" class="downloads" aria-label="Downloads"></div>
+    </div>
+    <div class="legend-kinds">
+      <span><span class="tag tag-measured">Measured</span> from the pixels</span>
+      <span><span class="tag tag-meta">Metadata</span> from the file</span>
+      <span><span class="tag tag-estimate">Estimate</span> depends on calibration</span>
+    </div>
+    <div id="stat-grid" class="stat-grid"></div>
+
+    <div class="charts">
+      <article class="chart-card wide">
+        <header><h3>Motion over time</h3><p>Mean camera-compensated flow of moving corners (px/s) and active vehicles</p></header>
+        <div id="chart-motion" class="chart"></div>
+      </article>
+      <article class="chart-card traj-card">
+        <header><h3>Trajectories</h3><p>Every confirmed vehicle path. Hover a table row to highlight it</p></header>
+        <div id="chart-traj" class="chart traj"></div>
+      </article>
+      <article class="chart-card">
+        <header><h3>Direction of motion</h3><p>Flow magnitude by direction, 16 bins</p></header>
+        <div id="chart-rose" class="chart rose"></div>
+      </article>
+      <article class="chart-card">
+        <header><h3>Motion energy</h3><p>Where motion concentrated over the whole clip</p></header>
+        <div class="chart"><img id="heatmap-img" alt="Cumulative motion-saliency heat map over the scene background"></div>
+      </article>
+    </div>
+
+    <article class="table-card">
+      <header><h3>Tracked vehicles and objects</h3><p id="tracks-sub"></p></header>
+      <div class="table-wrap"><table id="tracks-table"><thead></thead><tbody></tbody></table></div>
+    </article>
+
+    <article class="notes-card">
+      <h3>How to read these numbers</h3>
+      <ul id="notes"></ul>
+    </article>
+  </section>
+</section>
+</main>
+
+<!-- ============================================================ CALIBRATION -->
+<dialog id="cal-dialog" class="dialog" aria-labelledby="cal-title">
+  <form method="dialog" class="dialog-inner" id="cal-form" novalidate>
+    <header class="dialog-head">
+      <div>
+        <h2 id="cal-title">Calibrate the road plane</h2>
+        <p>Click four points <strong>on the road surface</strong> that form a real rectangle, in order <b>A → B → C → D</b>. A→B is the width (across), B→C the length (along the road). Drag a point to adjust it.</p>
+      </div>
+      <button type="button" class="icon-btn" data-action="close-calibration" aria-label="Close calibration">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </header>
+    <div class="cal-canvas-wrap"><canvas id="cal-canvas"></canvas></div>
+    <div class="cal-fields">
+      <label class="field">Width A→B (m)<input name="width_m" type="number" step="0.01" min="0.1" max="500" required placeholder="e.g. 3.65" inputmode="decimal"></label>
+      <label class="field">Length B→C (m)<input name="length_m" type="number" step="0.01" min="0.1" max="500" required placeholder="e.g. 9" inputmode="decimal"></label>
+      <label class="field grow">Reference (what you measured)<input name="label" type="text" maxlength="300" placeholder="e.g. lane width × one dash cycle, measured on site"></label>
+    </div>
+    <p id="cal-error" class="form-error" role="alert" hidden></p>
+    <footer class="dialog-foot">
+      <span id="cal-count" class="mono muted">0 / 4 points</span>
+      <div>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="reset-calibration">Reset points</button>
+        <button type="submit" class="btn btn-primary btn-sm" value="save">Use calibration</button>
+      </div>
+    </footer>
+  </form>
+</dialog>
+
+<footer class="site-foot">
+  <div class="foot-inner">
+    <p><strong>MotionScope</strong> · Lucas–Kanade motion and vehicle tracking</p>
+    <p class="refs mono">Lucas &amp; Kanade, IJCAI 1981 · Shi &amp; Tomasi, CVPR 1994 · Bewley et al., SORT, ICIP 2016 · Ge et al., YOLOX, 2021</p>
+  </div>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script src="app.js" type="module"></script>
+</body>
+</html>

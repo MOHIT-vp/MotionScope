@@ -1,0 +1,6 @@
+{
+  "points": [[0.3266, 0.6743], [0.6133, 0.6743], [0.7018, 0.8547], [0.3707, 0.8547]],
+  "width_m": 3.65,
+  "length_m": 27.0,
+  "label": "ASSUMED, not surveyed: lane width 3.65 m (typical UK dual carriageway) x 3 lane-dash cycles of 9 m (2 m mark + 7 m gap, UK high-speed lane line). Cross-sections approximated by image rows."
+}
