@@ -18,7 +18,7 @@ models/*.part
 # Local-only originals
 main.pdf
 
-# Demo-video production project (the rendered video lives in docs/media/)
+# Demo-video production project
 videos/
 
 # Editor / OS / local tool settings
