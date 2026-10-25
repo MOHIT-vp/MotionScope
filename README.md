@@ -41,6 +41,13 @@ Command line:
 .venv/bin/python -m motiontrack.cli input.mp4 -o output --calibration samples/ex-1.calibration.json
 ```
 
+Docker:
+
+```bash
+docker build -t motionscope .
+docker run -p 7860:7860 motionscope
+```
+
 ## Method
 
 ![Processing pipeline](docs/img/pipeline.svg)

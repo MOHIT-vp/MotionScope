@@ -152,7 +152,22 @@ See the README for commands. Summary:
 | Original algorithm | `.venv/bin/python scripts/legacy_baseline.py VIDEO --frames 500` |
 | Tests | `.venv/bin/python -m pytest -q` |
 
-Environment variables: `MT_DATA_DIR`, `MT_MAX_UPLOAD_MB` (1024), `MT_MAX_DURATION_S` (900), `MT_RETENTION_HOURS` (72).
+Environment variables (defaults in brackets): `MT_DATA_DIR`, `MT_MAX_UPLOAD_MB` (1024), `MT_MAX_DURATION_S` (900), `MT_RETENTION_HOURS` (72), `MT_MAX_PROCESS_SIZE` (1920), `MT_MAX_FRAMES` (0 = no cap), `MT_DEMO_NOTE` (empty).
+
+### Hosted demo (Docker / Hugging Face Spaces)
+
+The `Dockerfile` builds a self-contained image (Python 3.11, OpenCV headless, bundled ffmpeg, YOLOX model downloaded and checksum-verified at build time) that serves on port 7860 as a non-root user. It sets demo limits so one visitor cannot hold the single worker for long:
+
+| Setting | Demo value |
+|---|---|
+| `MT_MAX_UPLOAD_MB` | 50 |
+| `MT_MAX_DURATION_S` | 60 |
+| `MT_MAX_PROCESS_SIZE` | 960 (the 1280 px option is disabled in the UI) |
+| `MT_MAX_FRAMES` | 600 (longer clips are processed up to 600 frames) |
+| `MT_RETENTION_HOURS` | 1 (uploads and results are swept every 15 minutes) |
+| `MT_DEMO_NOTE` | shown under the upload area |
+
+`scripts/deploy_space.py <hf-user>/MotionScope` creates a Docker Space and uploads only the runtime files plus the Space card in `deploy/huggingface/README.md` (requires `hf auth login` once).
 
 ## 8. API
 

@@ -159,6 +159,7 @@ main { padding: 0 var(--gutter); max-width: var(--maxw); margin: 0 auto; }
 .dropzone.busy .dz-body { opacity: .35; }
 .dz-progress { position: absolute; inset: auto var(--s6) var(--s4) var(--s6); display: grid; gap: var(--s2); }
 .dz-progress-label { font-size: 12px; color: var(--text-2); }
+.limits-note { margin-top: var(--s3); font-size: var(--t-sm); color: var(--muted); }
 @media (hover: hover) and (pointer: fine) {
   .dropzone:hover { border-color: rgba(255,178,40,.55); background: rgba(255,178,40,.03); }
   .dropzone:hover .dz-icon { transform: translateY(-2px); }
@@ -465,3 +466,4 @@ td .na { color: var(--muted); font-family: var(--sans); font-size: 12px; }
   .btn:active:not(:disabled), .seg button:active:not(:disabled), .icon-btn:active, .dropzone:active .dz-btn { transform: none; }
   .seg-indicator, .sw::after, .chev, .dz-icon, .bar span { transition-duration: 1ms; }
 }
+.seg-sm input:disabled + span { opacity: .35; cursor: not-allowed; }

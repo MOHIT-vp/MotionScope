@@ -121,3 +121,18 @@ def test_pause_resume_cancel(video_id):
 def test_demos_manifest():
     r = client.get("/api/demos")
     assert r.status_code == 200 and "demos" in r.json()
+
+
+def test_demo_limits(video_id, monkeypatch):
+    from backend import settings
+    monkeypatch.setattr(settings, "MAX_PROCESS_SIZE", 960)
+    monkeypatch.setattr(settings, "MAX_FRAMES", 20)
+    monkeypatch.setattr(settings, "DEMO_NOTE", "Demo limits apply.")
+    h = client.get("/api/health").json()
+    assert h["max_process_size"] == 960 and h["max_frames"] == 20 and h["demo_note"] == "Demo limits apply."
+    r = client.post("/api/jobs", json={"video_id": video_id, "process_size": 1280})
+    assert r.status_code == 422 and "960" in r.json()["detail"]
+    j = client.post("/api/jobs", json={"video_id": video_id, "process_size": 640, "detector": "motion",
+                                       "max_frames": 500}).json()
+    assert j["frames_total"] == 20
+    assert wait(j["id"])["status"] == "completed"

@@ -154,6 +154,12 @@ async function loadHealth() {
     state.health = await api("/api/health");
     $$('[data-bind="max-mb"]').forEach((e) => (e.textContent = state.health.max_upload_mb));
     $$('[data-bind="max-min"]').forEach((e) => (e.textContent = Math.round(state.health.max_duration_s / 60)));
+    const h = state.health;
+    if (h.demo_note) { const n = $("#demo-note"); n.textContent = h.demo_note; n.hidden = false; }
+    if (h.max_process_size) {
+      $$('input[name="process_size"]').forEach((r) => { r.disabled = +r.value > h.max_process_size; });
+    }
+    if (h.max_frames) $('input[name="max_frames"]').placeholder = `All (max ${h.max_frames})`;
     if (!state.health.yolox_model) {
       const opt = $('select[name="detector"] option[value="auto"]');
       opt.textContent = "Auto (motion blobs; YOLOX not installed)";

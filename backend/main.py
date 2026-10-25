@@ -6,6 +6,7 @@ Run:  uvicorn backend.main:app --port 8000
 from __future__ import annotations
 
 import json
+import threading
 from typing import List, Optional
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
@@ -29,6 +30,19 @@ manager = JobManager()
 @app.on_event("startup")
 def _startup() -> None:
     videos.cleanup_expired(settings.RETENTION_HOURS)
+    # With a short retention window (hosted demo) expired files must also go
+    # while the server keeps running, not only at the next restart.
+    interval = min(3600.0, max(300.0, settings.RETENTION_HOURS * 3600 / 4))
+    stop = threading.Event()
+
+    def sweep() -> None:
+        while not stop.wait(interval):
+            try:
+                videos.cleanup_expired(settings.RETENTION_HOURS)
+            except Exception:
+                pass
+
+    threading.Thread(target=sweep, daemon=True, name="retention-sweep").start()
 
 
 @app.exception_handler(videos.UploadError)
@@ -99,6 +113,8 @@ def health():
     return {"status": "ok", "version": motiontrack.__version__, "ffmpeg": ffmpeg,
             "yolox_model": yolox_available(), "max_upload_mb": settings.MAX_UPLOAD_MB,
             "max_duration_s": settings.MAX_DURATION_S,
+            "max_process_size": settings.MAX_PROCESS_SIZE, "max_frames": settings.MAX_FRAMES,
+            "retention_hours": settings.RETENTION_HOURS, "demo_note": settings.DEMO_NOTE or None,
             "allowed_extensions": sorted(settings.ALLOWED_EXTENSIONS)}
 
 
@@ -146,7 +162,11 @@ def delete_video(video_id: str):
 # ------------------------------------------------------------------ jobs
 @app.post("/api/jobs", status_code=202)
 def create_job(body: JobIn):
+    if body.process_size > settings.MAX_PROCESS_SIZE:
+        raise HTTPException(422, f"process_size: this server processes at most {settings.MAX_PROCESS_SIZE} px.")
     cfg = body.model_dump(exclude={"video_id"})
+    if settings.MAX_FRAMES:
+        cfg["max_frames"] = min(cfg["max_frames"] or settings.MAX_FRAMES, settings.MAX_FRAMES)
     try:
         job = manager.submit(body.video_id, cfg)
     except CalibrationError as exc:
