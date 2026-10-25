@@ -4,6 +4,8 @@ Lucas–Kanade optical flow, motion saliency and vehicle tracking for traffic vi
 
 https://github.com/user-attachments/assets/dc9c5cb7-482c-4070-a8f8-2d9f5a5642cd
 
+**Live demo:** [huggingface.co/spaces/mohitpatil01/MotionScope](https://huggingface.co/spaces/mohitpatil01/MotionScope)
+
 ## Features
 
 - Pyramidal Lucas–Kanade optical flow on Shi–Tomasi corners with forward–backward validation

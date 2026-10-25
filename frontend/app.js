@@ -45,11 +45,15 @@ function toast(msg, ms = 3200) {
   toast._t = setTimeout(() => (t.hidden = true), ms);
 }
 
+// Static showcase build (no backend): demos and method only; analysis runs locally.
+const STATIC = document.documentElement.dataset.mode === "static";
+const REPO_URL = "https://github.com/MOHIT-vp/MotionScope";
+
 // --------------------------------------------------------------- routing
 function route() {
   const h = location.hash;
   const m = h.match(/^#\/v\/([0-9a-f]{32})(?:\/j\/([0-9a-f]{32}))?$/);
-  if (m) {
+  if (m && !STATIC) {
     showView("workspace");
     openWorkspace(m[1], m[2]);
   } else {
@@ -65,7 +69,7 @@ function showView(name) {
   if (name === "workspace" && $("#view-workspace").hidden) scrollTo(0, 0);
   $("#view-landing").hidden = name !== "landing";
   $("#view-workspace").hidden = name !== "workspace";
-  $(".nav-cta-label").textContent = name === "workspace" ? "New video" : "Analyse video";
+  $(".nav-cta-label").textContent = STATIC ? "View on GitHub" : name === "workspace" ? "New video" : "Analyse video";
   heroPlayback(name === "landing");
 }
 window.addEventListener("hashchange", route);
@@ -77,6 +81,7 @@ const dz = $("#dropzone");
 // One upload entry point in the nav. On the landing page it brings the
 // dropzone into view and opens the picker; in the workspace it starts over.
 $('[data-action="nav-cta"]').addEventListener("click", () => {
+  if (STATIC) { location.href = REPO_URL; return; }
   if ($("#view-landing").hidden) location.hash = "#/";
   requestAnimationFrame(() => {
     dz.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
@@ -150,6 +155,7 @@ function upload(file) {
 
 // ----------------------------------------------------------------- landing
 async function loadHealth() {
+  if (STATIC) return;
   try {
     state.health = await api("/api/health");
     $$('[data-bind="max-mb"]').forEach((e) => (e.textContent = state.health.max_upload_mb));
@@ -170,7 +176,12 @@ async function loadHealth() {
 async function loadDemos() {
   const grid = $("#demo-grid");
   let demos = [];
-  try { demos = (await api("/api/demos")).demos || []; } catch { /* ignore */ }
+  try {
+    demos = (await api(STATIC ? "demos/manifest.json" : "/api/demos")).demos || [];
+    if (STATIC) {   // the static host serves the demo files next to the page
+      demos.forEach((d) => { for (const k in d.files) d.files[k] = d.files[k].replace(/^\//, ""); });
+    }
+  } catch { /* ignore */ }
   if (!demos.length) {
     grid.innerHTML = `<p class="section-sub">No demonstrations generated yet. Run <code>python scripts/make_demos.py</code>.</p>`;
     $("#hero-caption").textContent = "Upload a video to see the processed output here.";
@@ -773,6 +784,22 @@ function tracksTable(r) {
 }
 
 // --------------------------------------------------------------------- boot
+// In the static build the upload area points to the source instead of a server.
+function applyStaticMode() {
+  if (!STATIC) return;
+  const card = document.createElement("div");
+  card.className = "dropzone static-card";
+  card.innerHTML = `<div class="dz-body">
+      <svg class="dz-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 16V8h8M40 16V8h-8M8 32v8h8M40 32v8h-8"/><path d="M24 31V17m0 0-6 6m6-6 6 6"/></svg>
+      <div class="dz-text"><strong class="dz-title">Analyse your own videos</strong>
+        <span class="dz-hint">Upload, calibrate and process locally with Python 3.9+.</span></div>
+      <a class="btn btn-primary dz-btn" href="${REPO_URL}#installation">Setup guide</a></div>`;
+  dz.replaceWith(card);
+  $("#upload-error").remove();
+  $(".nav-cta .icon").remove();
+}
+
+applyStaticMode();
 loadHealth();
 loadDemos();
 route();

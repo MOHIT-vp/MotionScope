@@ -159,6 +159,8 @@ main { padding: 0 var(--gutter); max-width: var(--maxw); margin: 0 auto; }
 .dropzone.busy .dz-body { opacity: .35; }
 .dz-progress { position: absolute; inset: auto var(--s6) var(--s4) var(--s6); display: grid; gap: var(--s2); }
 .dz-progress-label { font-size: 12px; color: var(--text-2); }
+.static-card { cursor: default; border-style: solid; }
+.static-card .dz-btn { pointer-events: auto; }
 .limits-note { margin-top: var(--s3); font-size: var(--t-sm); color: var(--muted); }
 @media (hover: hover) and (pointer: fine) {
   .dropzone:hover { border-color: rgba(255,178,40,.55); background: rgba(255,178,40,.03); }

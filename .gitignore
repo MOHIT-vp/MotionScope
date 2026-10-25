@@ -28,3 +28,6 @@ videos/
 
 # Demo media (kept locally)
 docs/media/
+
+# Build output
+dist/

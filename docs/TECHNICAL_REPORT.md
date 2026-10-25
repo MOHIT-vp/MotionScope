@@ -167,7 +167,11 @@ The `Dockerfile` builds a self-contained image (Python 3.11, OpenCV headless, bu
 | `MT_RETENTION_HOURS` | 1 (uploads and results are swept every 15 minutes) |
 | `MT_DEMO_NOTE` | shown under the upload area |
 
-`scripts/deploy_space.py <hf-user>/MotionScope` creates a Docker Space and uploads only the runtime files plus the Space card in `deploy/huggingface/README.md` (requires `hf auth login` once).
+`scripts/deploy_space.py <hf-user>/MotionScope` creates a Docker Space and uploads only the runtime files plus the Space card in `deploy/huggingface/README.md` (requires `hf auth login` once). Docker Spaces need a Hugging Face PRO subscription.
+
+### Static showcase
+
+`scripts/build_static.py` builds the landing page and demonstrations into `dist/static/` with the page in its static mode: no uploads, and the upload area links to the setup instructions. `scripts/deploy_space.py <hf-user>/MotionScope --static` publishes it as a free static Space; the live showcase is at [huggingface.co/spaces/mohitpatil01/MotionScope](https://huggingface.co/spaces/mohitpatil01/MotionScope).
 
 ## 8. API
 
