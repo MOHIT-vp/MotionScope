@@ -25,3 +25,6 @@ videos/
 .DS_Store
 .vscode/
 .idea/
+
+# Demo media (kept locally)
+docs/media/
