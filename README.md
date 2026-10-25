@@ -2,9 +2,10 @@
 
 **Lucas–Kanade optical flow, motion saliency and vehicle tracking for traffic video, in the browser.**
 
-[![MotionScope demo: upload, calibrate, process, report](docs/media/motionscope-demo-preview.gif)](https://github.com/MOHIT-vp/motionscope/raw/main/docs/media/motionscope-demo.mp4)
 
-▶ **[Full demo video (1:14, MP4, 12 MB)](https://github.com/MOHIT-vp/motionscope/raw/main/docs/media/motionscope-demo.mp4)**: one real session from upload to the motion report. Every screen is the running app; every number comes from the run's own report.
+
+https://github.com/user-attachments/assets/dc9c5cb7-482c-4070-a8f8-2d9f5a5642cd
+
 
 ---
 
